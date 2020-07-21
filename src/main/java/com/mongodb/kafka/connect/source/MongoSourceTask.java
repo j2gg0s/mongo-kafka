@@ -15,15 +15,7 @@
  */
 package com.mongodb.kafka.connect.source;
 
-import static com.mongodb.kafka.connect.source.MongoSourceConfig.BATCH_SIZE_CONFIG;
-import static com.mongodb.kafka.connect.source.MongoSourceConfig.COLLECTION_CONFIG;
-import static com.mongodb.kafka.connect.source.MongoSourceConfig.CONNECTION_URI_CONFIG;
-import static com.mongodb.kafka.connect.source.MongoSourceConfig.COPY_EXISTING_CONFIG;
-import static com.mongodb.kafka.connect.source.MongoSourceConfig.DATABASE_CONFIG;
-import static com.mongodb.kafka.connect.source.MongoSourceConfig.POLL_AWAIT_TIME_MS_CONFIG;
-import static com.mongodb.kafka.connect.source.MongoSourceConfig.POLL_MAX_BATCH_SIZE_CONFIG;
-import static com.mongodb.kafka.connect.source.MongoSourceConfig.PUBLISH_FULL_DOCUMENT_ONLY_CONFIG;
-import static com.mongodb.kafka.connect.source.MongoSourceConfig.TOPIC_PREFIX_CONFIG;
+import static com.mongodb.kafka.connect.source.MongoSourceConfig.*;
 import static com.mongodb.kafka.connect.util.ConfigHelper.getMongoDriverInformation;
 import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
@@ -97,6 +89,9 @@ public class MongoSourceTask extends SourceTask {
   private static final Logger LOGGER = LoggerFactory.getLogger(MongoSourceTask.class);
   private static final String CONNECTOR_TYPE = "source";
 
+  private static final String ID_FIELD = "_id";
+  private static final String FULL_DOCUMENT = "fullDocument";
+
   private final Time time;
   private final AtomicBoolean isRunning = new AtomicBoolean();
   private final AtomicBoolean isCopying = new AtomicBoolean();
@@ -157,6 +152,7 @@ public class MongoSourceTask extends SourceTask {
     int maxBatchSize = sourceConfig.getInt(POLL_MAX_BATCH_SIZE_CONFIG);
     long nextUpdate = startPoll + sourceConfig.getLong(POLL_AWAIT_TIME_MS_CONFIG);
     String prefix = sourceConfig.getString(TOPIC_PREFIX_CONFIG);
+    String keyField = sourceConfig.getString(KEY_FIELD_CONFIG);
     Map<String, Object> partition = createPartitionMap(sourceConfig);
 
     while (isRunning.get()) {
@@ -195,7 +191,17 @@ public class MongoSourceTask extends SourceTask {
         jsonDocument.ifPresent(
             (json) -> {
               LOGGER.trace("Adding {} to {}: {}", json, topicName, sourceOffset);
-              String keyJson = new BsonDocument("_id", changeStreamDocument.get("_id")).toJson();
+              String keyJson = "";
+              if (!keyField.isEmpty() && changeStreamDocument.containsKey(FULL_DOCUMENT)) {
+                BsonDocument fullDocument = changeStreamDocument.getDocument(FULL_DOCUMENT);
+                if (fullDocument.containsKey(keyField)) {
+                  keyJson = new BsonDocument(keyField, fullDocument.get(keyField)).toJson();
+                }
+              }
+              if (keyJson.isEmpty()) {
+                keyJson = new BsonDocument(ID_FIELD, changeStreamDocument.get(ID_FIELD)).toJson();
+              }
+
               sourceRecords.add(
                   new SourceRecord(
                       partition,

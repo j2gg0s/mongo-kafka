@@ -20,6 +20,7 @@ import static com.mongodb.kafka.connect.source.MongoSourceConfig.BATCH_SIZE_CONF
 import static com.mongodb.kafka.connect.source.MongoSourceConfig.COLLATION_CONFIG;
 import static com.mongodb.kafka.connect.source.MongoSourceConfig.CONNECTION_URI_CONFIG;
 import static com.mongodb.kafka.connect.source.MongoSourceConfig.FULL_DOCUMENT_CONFIG;
+import static com.mongodb.kafka.connect.source.MongoSourceConfig.KEY_FIELD_CONFIG;
 import static com.mongodb.kafka.connect.source.MongoSourceConfig.PIPELINE_CONFIG;
 import static com.mongodb.kafka.connect.source.MongoSourceConfig.POLL_AWAIT_TIME_MS_CONFIG;
 import static com.mongodb.kafka.connect.source.MongoSourceConfig.POLL_MAX_BATCH_SIZE_CONFIG;
@@ -179,7 +180,7 @@ class MongoSourceConfigTest {
 
   @Test
   @DisplayName("test topic prefix")
-  void tesTopicPrefix() {
+  void testTopicPrefix() {
     assertAll(
         "Topic prefix",
         () -> assertEquals("", createSourceConfig().getString(TOPIC_PREFIX_CONFIG)),
@@ -187,6 +188,18 @@ class MongoSourceConfigTest {
             assertEquals(
                 "prefix",
                 createSourceConfig(TOPIC_PREFIX_CONFIG, "prefix").getString(TOPIC_PREFIX_CONFIG)));
+  }
+
+  @Test
+  @DisplayName("test key field")
+  void testKeyField() {
+    assertAll(
+        "Key field",
+        () -> assertEquals("", createSourceConfig().getString(KEY_FIELD_CONFIG)),
+        () ->
+            assertEquals(
+                "prefix",
+                createSourceConfig(KEY_FIELD_CONFIG, "prefix").getString(KEY_FIELD_CONFIG)));
   }
 
   @Test

@@ -64,6 +64,13 @@ public class MongoSourceConfig extends AbstractConfig {
   private static final String TOPIC_PREFIX_DISPLAY = "Topic Prefix";
   private static final String TOPIC_PREFIX_DEFAULT = "";
 
+  public static final String KEY_FIELD_CONFIG = "key.field";
+  private static final String KEY_FIELD_DOC =
+      "Extract field from fullDocument if exist as Kafka message's key, "
+          + "default use resume_token.";
+  private static final String KEY_FIELD_DISPLAY = "Key Field";
+  private static final String KEY_FIELD_DEFAULT = "";
+
   public static final String PIPELINE_CONFIG = "pipeline";
   private static final String PIPELINE_DISPLAY = "The pipeline to apply to the change stream";
   private static final String PIPELINE_DOC =
@@ -376,6 +383,18 @@ public class MongoSourceConfig extends AbstractConfig {
         ++orderInGroup,
         Width.MEDIUM,
         TOPIC_PREFIX_DISPLAY);
+
+    configDef.define(
+        KEY_FIELD_CONFIG,
+        Type.STRING,
+        KEY_FIELD_DEFAULT,
+        null,
+        Importance.LOW,
+        KEY_FIELD_DOC,
+        group,
+        ++orderInGroup,
+        Width.MEDIUM,
+        KEY_FIELD_DISPLAY);
 
     configDef.define(
         POLL_MAX_BATCH_SIZE_CONFIG,
